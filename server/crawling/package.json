@@ -18,7 +18,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "migrate:s3": "ts-node -r tsconfig-paths/register scripts/migrate-to-s3.ts"
+    "migrate:s3": "ts-node -r tsconfig-paths/register scripts/migrate-to-s3.ts",
+    "remove:content": "ts-node -r tsconfig-paths/register scripts/remove-content.ts",
+    "rebuild:indexes": "ts-node -r tsconfig-paths/register scripts/rebuild-indexes.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.535.0",
