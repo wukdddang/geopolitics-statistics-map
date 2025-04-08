@@ -8,7 +8,7 @@ export class SchedulerService {
 
   constructor(private readonly crawlerService: CrawlerService) {}
 
-  @Cron(CronExpression.EVERY_6_HOURS)
+  @Cron(CronExpression.EVERY_HOUR)
   async handleCrawlJob() {
     this.logger.log('Starting scheduled crawling job');
     try {
