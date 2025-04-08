@@ -5,6 +5,7 @@ import {
   MongoNews,
   NewsDocument as NewsDocumentType,
 } from './schemas/news.schema';
+import { S3Service } from '../aws/s3.service';
 
 // 뉴스 기사 인터페이스 정의
 export interface NewsArticleInfo {
@@ -17,6 +18,7 @@ export interface NewsArticleInfo {
   publishedAt: Date;
   metadata?: Record<string, any>;
   geopoliticalData?: GeopoliticalData;
+  contentKey?: string;
 }
 
 // 지정학적 데이터 인터페이스
@@ -34,16 +36,36 @@ export class NewsService {
   constructor(
     @InjectModel(MongoNews.name)
     private newsModel: Model<NewsDocumentType>,
+    private readonly s3Service: S3Service,
   ) {}
 
   async createNews(newsData: NewsArticleInfo): Promise<void> {
     this.logger.log(`Creating news: ${newsData.title}`);
 
     try {
+      let contentKey = newsData.contentKey;
+      let content = '';
+
+      // S3에 콘텐츠 저장 (content가 있는 경우)
+      if (newsData.content) {
+        contentKey = await this.s3Service.uploadContent(
+          newsData.content,
+          newsData.source,
+        );
+        // 간략한 콘텐츠 메타데이터만 저장 (필요시)
+        content =
+          newsData.content.length > 200
+            ? newsData.content.substring(0, 200) + '...'
+            : '';
+      }
+
       // Store data in MongoDB
       const newsDoc = new this.newsModel({
         title: newsData.title,
-        content: newsData.content || '',
+        // content 필드에는 짧은 미리보기 또는 빈 문자열 저장
+        content,
+        // S3 콘텐츠 키 저장
+        contentKey,
         source: newsData.source,
         url: newsData.url,
         author: newsData.author || null,
@@ -71,6 +93,41 @@ export class NewsService {
     }
   }
 
+  // 기사 전체 내용 조회 (S3에서 가져옴)
+  async getFullContent(id: string): Promise<string> {
+    const news = await this.newsModel.findById(id).exec();
+
+    if (!news) {
+      throw new Error('News article not found');
+    }
+
+    if (news.contentKey) {
+      try {
+        // S3에서 전체 콘텐츠 가져오기
+        return await this.s3Service.getContent(news.contentKey);
+      } catch (error) {
+        this.logger.error(`Error fetching content from S3: ${error.message}`);
+        throw error;
+      }
+    } else if (news.content) {
+      // DB에 저장된 콘텐츠 반환
+      return news.content;
+    } else {
+      return 'No content available';
+    }
+  }
+
+  // 임시 액세스 URL 생성
+  async getContentUrl(id: string): Promise<string> {
+    const news = await this.newsModel.findById(id).exec();
+
+    if (!news || !news.contentKey) {
+      throw new Error('News article not found or has no content key');
+    }
+
+    return await this.s3Service.getSignedUrl(news.contentKey);
+  }
+
   // 이미 존재하는 URL 목록 찾기
   async findExistingUrls(urls: string[]): Promise<string[]> {
     const existingNews = await this.newsModel
@@ -96,7 +153,7 @@ export class NewsService {
   }
 
   async search(query: string): Promise<NewsDocumentType[]> {
-    // 텍스트 검색 인덱스를 사용하여 검색
+    // 텍스트 검색 인덱스를 사용하여 검색 (content는 제외됨)
     if (query.trim().length > 0) {
       return this.newsModel
         .find({ $text: { $search: query } })

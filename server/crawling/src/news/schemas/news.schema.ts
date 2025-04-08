@@ -9,8 +9,11 @@ export class MongoNews {
   @Prop({ required: true })
   title: string;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   content: string;
+
+  @Prop({ required: false })
+  contentKey: string;
 
   @Prop({ required: true })
   source: string;
@@ -45,8 +48,8 @@ export class MongoNews {
 
 export const NewsSchema = SchemaFactory.createForClass(MongoNews);
 
-// 텍스트 검색을 위한 인덱스 추가
-NewsSchema.index({ title: 'text', content: 'text' });
+// 텍스트 검색을 위한 인덱스 추가 - content 대신 title만 사용
+NewsSchema.index({ title: 'text' });
 
 // URL 중복 방지를 위한 인덱스
 NewsSchema.index({ url: 1 }, { unique: true });

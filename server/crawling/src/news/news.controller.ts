@@ -42,4 +42,16 @@ export class NewsController {
   async findOne(@Param('id') id: string): Promise<NewsDocument | null> {
     return this.newsService.findOne(id);
   }
+
+  @Get(':id/content')
+  async getFullContent(@Param('id') id: string): Promise<{ content: string }> {
+    const content = await this.newsService.getFullContent(id);
+    return { content };
+  }
+
+  @Get(':id/content-url')
+  async getContentUrl(@Param('id') id: string): Promise<{ url: string }> {
+    const url = await this.newsService.getContentUrl(id);
+    return { url };
+  }
 }
