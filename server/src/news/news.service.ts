@@ -6,28 +6,7 @@ import {
   NewsDocument as NewsDocumentType,
 } from './schemas/news.schema';
 import { S3Service } from '../aws/s3.service';
-
-// 뉴스 기사 인터페이스 정의
-export interface NewsArticleInfo {
-  title: string;
-  url: string;
-  source: string;
-  content?: string;
-  author?: string | null;
-  tags?: string[];
-  publishedAt: Date;
-  metadata?: Record<string, any>;
-  geopoliticalData?: GeopoliticalData;
-  contentKey?: string;
-}
-
-// 지정학적 데이터 인터페이스
-export interface GeopoliticalData {
-  countries: string[];
-  regions: string[];
-  organizations: string[];
-  events: string[];
-}
+import { NewsArticleInfo, GeopoliticalData } from './interfaces/news.interface';
 
 @Injectable()
 export class NewsService {

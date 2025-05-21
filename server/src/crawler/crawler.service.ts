@@ -1,18 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { NewsService, NewsArticleInfo } from '../news/news.service';
+import { NewsService } from '../news/news.service';
+import { NewsArticleInfo, NewsSource } from '../news/interfaces/news.interface';
 import { Browser, chromium } from 'playwright';
-
-// 뉴스 소스 인터페이스 정의
-interface NewsSource {
-  name: string;
-  url: string;
-  selector: string;
-  titleSelector: string;
-  linkSelector: string;
-  baseUrl: string;
-}
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class CrawlerService {
@@ -287,19 +278,6 @@ export class CrawlerService {
       });
     }
     return this.browser;
-  }
-
-  // Reuters 크롤링 구현 - 비활성화 (사이트에서 크롤링을 방지하기 때문)
-  async crawlReuters(): Promise<NewsArticleInfo[]> {
-    this.logger.log(
-      'Reuters 크롤링은 사이트 정책으로 인해 비활성화되었습니다.',
-    );
-    return [];
-  }
-
-  // Reuters 월드 카테고리 별도 크롤링 메서드
-  async crawlReutersWorldCategories(): Promise<NewsArticleInfo[]> {
-    return [];
   }
 
   // BBC 크롤링 구현
